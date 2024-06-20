@@ -3,7 +3,7 @@ package runnerutils
 import (
 	"bufio"
 	"html/template"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -47,7 +47,7 @@ func readErrorFile() string {
 	defer file.Close()
 
 	reader := bufio.NewReader(file)
-	bytes, _ := ioutil.ReadAll(reader)
+	bytes, _ := io.ReadAll(reader)
 
 	return string(bytes)
 }

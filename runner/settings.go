@@ -17,8 +17,9 @@ const (
 	mainSettingsSection = "Settings"
 )
 
-var settings = map[string]string{
+var Settings = map[string]string{
 	"config_path":       "./runner.conf",
+	"build_commands":    "[\"ls\"]",
 	"root":              ".",
 	"tmp_path":          "./tmp",
 	"build_name":        "runner-build",
@@ -65,16 +66,16 @@ var colors = map[string]string{
 
 func logColor(logName string) string {
 	settingsKey := fmt.Sprintf("log_color_%s", logName)
-	colorName := settings[settingsKey]
+	colorName := Settings[settingsKey]
 
 	return colors[colorName]
 }
 
 func loadEnvSettings() {
-	for key, _ := range settings {
+	for key, _ := range Settings {
 		envKey := fmt.Sprintf("%s%s", envSettingsPrefix, strings.ToUpper(key))
 		if value := os.Getenv(envKey); value != "" {
-			settings[key] = value
+			Settings[key] = value
 		}
 	}
 }
@@ -91,7 +92,7 @@ func loadRunnerConfigSettings() {
 	}
 
 	for key, value := range sections[mainSettingsSection] {
-		settings[key] = value
+		Settings[key] = value
 	}
 }
 
@@ -109,15 +110,19 @@ func getenv(key, defaultValue string) string {
 }
 
 func root() string {
-	return settings["root"]
+	return Settings["root"]
 }
 
 func tmpPath() string {
-	return settings["tmp_path"]
+	return Settings["tmp_path"]
+}
+
+func buildCommand() string {
+	return Settings["build_commands"]
 }
 
 func buildName() string {
-	return settings["build_name"]
+	return Settings["build_name"]
 }
 func buildPath() string {
 	p := filepath.Join(tmpPath(), buildName())
@@ -128,7 +133,7 @@ func buildPath() string {
 }
 
 func buildErrorsFileName() string {
-	return settings["build_log"]
+	return Settings["build_log"]
 }
 
 func buildErrorsFilePath() string {
@@ -136,11 +141,11 @@ func buildErrorsFilePath() string {
 }
 
 func configPath() string {
-	return settings["config_path"]
+	return Settings["config_path"]
 }
 
 func buildDelay() time.Duration {
-	value, _ := strconv.Atoi(settings["build_delay"])
+	value, _ := strconv.Atoi(Settings["build_delay"])
 
 	return time.Duration(value)
 }

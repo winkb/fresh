@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,7 +9,7 @@ import (
 	"github.com/howeyc/fsnotify"
 )
 
-func watchFolder(path string) {
+func watchFolder(path string, ctx context.Context) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		fatal(err)
@@ -22,6 +23,8 @@ func watchFolder(path string) {
 					watcherLog("sending event %s", ev)
 					startChannel <- ev.String()
 				}
+			case <-ctx.Done():
+				return
 			case err := <-watcher.Error:
 				watcherLog("error: %s", err)
 			}
@@ -36,7 +39,7 @@ func watchFolder(path string) {
 	}
 }
 
-func watch() {
+func watch(ctx context.Context) {
 	root := root()
 	filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() && !isTmpDir(path) {
@@ -49,7 +52,7 @@ func watch() {
 				return filepath.SkipDir
 			}
 
-			watchFolder(path)
+			watchFolder(path, ctx)
 		}
 
 		return err

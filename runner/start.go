@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"runtime"
@@ -29,7 +30,7 @@ func flushEvents() {
 	}
 }
 
-func start() {
+func start(ctx context.Context) {
 	loopIndex := 0
 	buildDelay := buildDelay()
 
@@ -37,45 +38,52 @@ func start() {
 
 	go func() {
 		for {
-			loopIndex++
-			mainLog("Waiting (loop %d)...", loopIndex)
-			eventName := <-startChannel
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				loopIndex++
+				mainLog("Waiting (loop %d)...", loopIndex)
+				eventName := <-startChannel
 
-			mainLog("receiving first event %s", eventName)
-			mainLog("sleeping for %d milliseconds", buildDelay)
-			time.Sleep(buildDelay * time.Millisecond)
-			mainLog("flushing events")
+				mainLog("receiving first event %s", eventName)
+				mainLog("sleeping for %d milliseconds", buildDelay)
+				time.Sleep(buildDelay * time.Millisecond)
+				mainLog("flushing events")
 
-			flushEvents()
+				flushEvents()
 
-			mainLog("Started! (%d Goroutines)", runtime.NumGoroutine())
-			err := removeBuildErrorsLog()
-			if err != nil {
-				mainLog(err.Error())
-			}
+				mainLog("Started! (%d Goroutines)", runtime.NumGoroutine())
+				err := removeBuildErrorsLog()
+				if err != nil {
+					mainLog(err.Error())
+				}
 
-			buildFailed := false
-			if shouldRebuild(eventName) {
-				errorMessage, ok := build()
-				if !ok {
-					buildFailed = true
-					mainLog("Build Failed: \n %s", errorMessage)
-					if !started {
-						os.Exit(1)
+				buildFailed := false
+				if shouldRebuild(eventName) {
+					errorMessage, ok := build()
+					if !ok {
+						buildFailed = true
+						mainLog("Build Failed: \n %s", errorMessage)
+						if !started {
+							os.Exit(1)
+						}
+						createBuildErrorsLog(errorMessage)
 					}
-					createBuildErrorsLog(errorMessage)
+				}
+
+				if !buildFailed {
+					if started {
+						// stopChannel <- true
+					}
+					// don't run the app if the build failed
+					// run()
+
+					started = true
+					mainLog(strings.Repeat("-", 20))
+
 				}
 			}
-
-			if !buildFailed {
-				if started {
-					stopChannel <- true
-				}
-				run()
-			}
-
-			started = true
-			mainLog(strings.Repeat("-", 20))
 		}
 	}()
 }
@@ -100,7 +108,7 @@ func setEnvVars() {
 		os.Setenv("RUNNER_WD", wd)
 	}
 
-	for k, v := range settings {
+	for k, v := range Settings {
 		key := strings.ToUpper(fmt.Sprintf("%s%s", envSettingsPrefix, k))
 		os.Setenv(key, v)
 	}
@@ -108,15 +116,18 @@ func setEnvVars() {
 
 // Watches for file changes in the root directory.
 // After each file system event it builds and (re)starts the application.
-func Start() {
+func Start(ctx context.Context, filePath string) {
 	initLimit()
 	initSettings()
+
+	Settings["root"] = filePath
+
 	initLogFuncs()
 	initFolders()
 	setEnvVars()
-	watch()
-	start()
+	watch(ctx)
+	start(ctx)
 	startChannel <- "/"
 
-	<-make(chan int)
+	<-ctx.Done()
 }

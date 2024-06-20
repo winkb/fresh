@@ -1,8 +1,8 @@
 package runner
 
 import (
+	"encoding/json"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 )
@@ -10,7 +10,10 @@ import (
 func build() (string, bool) {
 	buildLog("Building...")
 
-	cmd := exec.Command("go", "build", "-o", buildPath(), root())
+	cmds := []string{}
+	json.Unmarshal([]byte(buildCommand()), &cmds)
+
+	cmd := exec.Command(cmds[0], cmds[1:]...)
 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
@@ -28,7 +31,7 @@ func build() (string, bool) {
 	}
 
 	io.Copy(os.Stdout, stdout)
-	errBuf, _ := ioutil.ReadAll(stderr)
+	errBuf, _ := io.ReadAll(stderr)
 
 	err = cmd.Wait()
 	if err != nil {

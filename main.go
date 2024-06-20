@@ -13,9 +13,10 @@ Traffic (https://github.com/pilu/traffic) already has a middleware that shows th
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
-	"github.com/pilu/fresh/runner"
+	"fresh/runner"
 	"os"
 )
 
@@ -32,5 +33,5 @@ func main() {
 		}
 	}
 
-	runner.Start()
+	runner.Start(context.Background(), ".")
 }
