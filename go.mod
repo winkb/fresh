@@ -1,4 +1,4 @@
-module fresh
+module github.com/winkb/fresh
 
 go 1.19
 

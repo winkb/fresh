@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fresh/runner/runnerutils"
 	"net/http"
 	"os"
+
+	"github.com/winkb/fresh/runner/runnerutils"
 
 	"github.com/codegangsta/martini"
 )

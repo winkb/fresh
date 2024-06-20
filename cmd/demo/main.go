@@ -3,7 +3,8 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fresh/runner"
+
+	"github.com/winkb/fresh/runner"
 )
 
 func main() {

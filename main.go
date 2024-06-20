@@ -16,8 +16,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"fresh/runner"
 	"os"
+
+	"github.com/winkb/fresh/runner"
 )
 
 func main() {
