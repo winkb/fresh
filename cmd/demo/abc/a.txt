@@ -1,7 +1,1 @@
-abc
-blu
-dd
-blue.com
-aaa
-user
-hello
+user1

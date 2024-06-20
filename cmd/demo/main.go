@@ -12,7 +12,7 @@ func main() {
 
 	defer cancel()
 
-	cmdArr := []string{"ls", "."}
+	cmdArr := []string{"cat", "abc/a.txt"}
 	cmdStr, _ := json.Marshal(cmdArr)
 
 	runner.Settings["build_commands"] = string(cmdStr)
