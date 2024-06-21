@@ -17,25 +17,6 @@ const (
 	mainSettingsSection = "Settings"
 )
 
-var Settings = map[string]string{
-	"config_path":       "./runner.conf",
-	"build_commands":    "[\"ls\"]",
-	"root":              ".",
-	"tmp_path":          "./tmp",
-	"build_name":        "runner-build",
-	"build_log":         "runner-build-errors.log",
-	"valid_ext":         ".go, .tpl, .tmpl, .html",
-	"no_rebuild_ext":    ".tpl, .tmpl, .html",
-	"ignored":           "assets, tmp",
-	"build_delay":       "600",
-	"colors":            "1",
-	"log_color_main":    "cyan",
-	"log_color_build":   "yellow",
-	"log_color_runner":  "green",
-	"log_color_watcher": "magenta",
-	"log_color_app":     "",
-}
-
 var colors = map[string]string{
 	"reset":          "0",
 	"black":          "30",
@@ -64,41 +45,41 @@ var colors = map[string]string{
 	"bright_white":   "37;2",
 }
 
-func logColor(logName string) string {
+func logColor(s *mySetting, logName string) string {
 	settingsKey := fmt.Sprintf("log_color_%s", logName)
-	colorName := Settings[settingsKey]
+	colorName := s.settings[settingsKey]
 
 	return colors[colorName]
 }
 
-func loadEnvSettings() {
-	for key, _ := range Settings {
+func (l *mySetting) loadEnvSettings() {
+	for key, _ := range l.settings {
 		envKey := fmt.Sprintf("%s%s", envSettingsPrefix, strings.ToUpper(key))
 		if value := os.Getenv(envKey); value != "" {
-			Settings[key] = value
+			l.settings[key] = value
 		}
 	}
 }
 
-func loadRunnerConfigSettings() {
-	if _, err := os.Stat(configPath()); err != nil {
+func (l *mySetting) loadRunnerConfigSettings() {
+	if _, err := os.Stat(l.configPath()); err != nil {
 		return
 	}
 
-	logger.Printf("Loading settings from %s", configPath())
-	sections, err := config.ParseFile(configPath(), mainSettingsSection)
+	logger.Printf("Loading settings from %s", l.configPath())
+	sections, err := config.ParseFile(l.configPath(), mainSettingsSection)
 	if err != nil {
 		return
 	}
 
 	for key, value := range sections[mainSettingsSection] {
-		Settings[key] = value
+		l.settings[key] = value
 	}
 }
 
-func initSettings() {
-	loadEnvSettings()
-	loadRunnerConfigSettings()
+func initSettings(s *mySetting) {
+	s.loadEnvSettings()
+	s.loadRunnerConfigSettings()
 }
 
 func getenv(key, defaultValue string) string {
@@ -109,43 +90,53 @@ func getenv(key, defaultValue string) string {
 	return defaultValue
 }
 
-func root() string {
-	return Settings["root"]
+type mySetting struct {
+	settings map[string]string
 }
 
-func tmpPath() string {
-	return Settings["tmp_path"]
+func NewMySetting(settings map[string]string) *mySetting {
+	return &mySetting{
+		settings: settings,
+	}
 }
 
-func buildCommand() string {
-	return Settings["build_commands"]
+func (l *mySetting) root() string {
+	return l.settings["root"]
 }
 
-func buildName() string {
-	return Settings["build_name"]
+func (l *mySetting) tmpPath() string {
+	return l.settings["tmp_path"]
 }
-func buildPath() string {
-	p := filepath.Join(tmpPath(), buildName())
+
+func (l *mySetting) buildCommand() string {
+	return l.settings["build_commands"]
+}
+
+func (l *mySetting) buildName() string {
+	return l.settings["build_name"]
+}
+func (l *mySetting) buildPath() string {
+	p := filepath.Join(l.tmpPath(), l.buildName())
 	if runtime.GOOS == "windows" && filepath.Ext(p) != ".exe" {
 		p += ".exe"
 	}
 	return p
 }
 
-func buildErrorsFileName() string {
-	return Settings["build_log"]
+func (l *mySetting) buildErrorsFileName() string {
+	return l.settings["build_log"]
 }
 
-func buildErrorsFilePath() string {
-	return filepath.Join(tmpPath(), buildErrorsFileName())
+func (l *mySetting) buildErrorsFilePath() string {
+	return filepath.Join(l.tmpPath(), l.buildErrorsFileName())
 }
 
-func configPath() string {
-	return Settings["config_path"]
+func (l *mySetting) configPath() string {
+	return l.settings["config_path"]
 }
 
-func buildDelay() time.Duration {
-	value, _ := strconv.Atoi(Settings["build_delay"])
+func (l *mySetting) buildDelay() time.Duration {
+	value, _ := strconv.Atoi(l.settings["build_delay"])
 
 	return time.Duration(value)
 }

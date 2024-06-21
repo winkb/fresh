@@ -30,9 +30,9 @@ func flushEvents() {
 	}
 }
 
-func start(ctx context.Context) {
+func start(ctx context.Context, s *mySetting) {
 	loopIndex := 0
-	buildDelay := buildDelay()
+	buildDelay := s.buildDelay()
 
 	started := false
 
@@ -54,21 +54,21 @@ func start(ctx context.Context) {
 				flushEvents()
 
 				mainLog("Started! (%d Goroutines)", runtime.NumGoroutine())
-				err := removeBuildErrorsLog()
+				err := removeBuildErrorsLog(s)
 				if err != nil {
 					mainLog(err.Error())
 				}
 
 				buildFailed := false
-				if shouldRebuild(eventName) {
-					errorMessage, ok := build()
+				if shouldRebuild(s, eventName) {
+					errorMessage, ok := build(s)
 					if !ok {
 						buildFailed = true
 						mainLog("Build Failed: \n %s", errorMessage)
 						if !started {
 							os.Exit(1)
 						}
-						createBuildErrorsLog(errorMessage)
+						createBuildErrorsLog(s, errorMessage)
 					}
 				}
 
@@ -93,22 +93,22 @@ func init() {
 	stopChannel = make(chan bool)
 }
 
-func initLogFuncs() {
-	mainLog = newLogFunc("main")
-	watcherLog = newLogFunc("watcher")
-	runnerLog = newLogFunc("runner")
-	buildLog = newLogFunc("build")
-	appLog = newLogFunc("app")
+func initLogFuncs(s *mySetting) {
+	mainLog = newLogFunc(s, "main")
+	watcherLog = newLogFunc(s, "watcher")
+	runnerLog = newLogFunc(s, "runner")
+	buildLog = newLogFunc(s, "build")
+	appLog = newLogFunc(s, "app")
 }
 
-func setEnvVars() {
+func setEnvVars(s *mySetting) {
 	os.Setenv("DEV_RUNNER", "1")
 	wd, err := os.Getwd()
 	if err == nil {
 		os.Setenv("RUNNER_WD", wd)
 	}
 
-	for k, v := range Settings {
+	for k, v := range s.settings {
 		key := strings.ToUpper(fmt.Sprintf("%s%s", envSettingsPrefix, k))
 		os.Setenv(key, v)
 	}
@@ -116,17 +116,41 @@ func setEnvVars() {
 
 // Watches for file changes in the root directory.
 // After each file system event it builds and (re)starts the application.
-func Start(ctx context.Context, filePath string) {
+func Start(ctx context.Context, s *mySetting) {
+
+	var defaultSetting = map[string]string{
+		"config_path":       "./runner.conf",
+		"build_commands":    "[\"ls\"]",
+		"root":              ".",
+		"tmp_path":          "./tmp",
+		"build_name":        "runner-build",
+		"build_log":         "runner-build-errors.log",
+		"valid_ext":         ".go, .tpl, .tmpl, .html",
+		"no_rebuild_ext":    ".tpl, .tmpl, .html",
+		"ignored":           "assets, tmp",
+		"build_delay":       "600",
+		"colors":            "1",
+		"log_color_main":    "cyan",
+		"log_color_build":   "yellow",
+		"log_color_runner":  "green",
+		"log_color_watcher": "magenta",
+		"log_color_app":     "",
+	}
+
+	for k, v := range defaultSetting {
+		if _, ok := s.settings[k]; !ok {
+			s.settings[k] = v
+		}
+	}
+
 	initLimit()
-	initSettings()
+	initSettings(s)
 
-	Settings["root"] = filePath
-
-	initLogFuncs()
-	initFolders()
-	setEnvVars()
-	watch(ctx)
-	start(ctx)
+	initLogFuncs(s)
+	initFolders(s)
+	setEnvVars(s)
+	watch(ctx, s)
+	start(ctx, s)
 	startChannel <- "/"
 
 	<-ctx.Done()

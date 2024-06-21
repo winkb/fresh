@@ -16,8 +16,12 @@ func main() {
 	cmdArr := []string{"cat", "abc/a.txt"}
 	cmdStr, _ := json.Marshal(cmdArr)
 
-	runner.Settings["build_commands"] = string(cmdStr)
-	runner.Settings["valid_ext"] = ".txt"
+	var sm = map[string]string{
+		"build_commands": string(cmdStr),
+		"valid_ext":      ".txt",
+	}
 
-	runner.Start(ctx, "./abc")
+	var s = runner.NewMySetting(sm)
+
+	runner.Start(ctx, s)
 }

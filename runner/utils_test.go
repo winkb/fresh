@@ -18,8 +18,10 @@ func TestIsWatchedFile(t *testing.T) {
 		{"./tmp/test.go", false},
 	}
 
+	var s = NewMySetting(map[string]string{})
+
 	for _, test := range tests {
-		actual := isWatchedFile(test.file)
+		actual := isWatchedFile(s, test.file)
 
 		if actual != test.expected {
 			t.Errorf("Expected %v, got %v", test.expected, actual)
@@ -40,8 +42,10 @@ func TestShouldRebuild(t *testing.T) {
 		{`"./a/path/test.go": MODIFIED`, true},
 	}
 
+	var s = NewMySetting(map[string]string{})
+
 	for _, test := range tests {
-		actual := shouldRebuild(test.eventName)
+		actual := shouldRebuild(s, test.eventName)
 
 		if actual != test.expected {
 			t.Errorf("Expected %v, got %v (event was '%s')", test.expected, actual, test.eventName)
@@ -59,8 +63,10 @@ func TestIsIgnoredFolder(t *testing.T) {
 		{"app/controllers", false},
 	}
 
+	var s = NewMySetting(map[string]string{})
+
 	for _, test := range tests {
-		actual := isIgnoredFolder(test.dir)
+		actual := isIgnoredFolder(s, test.dir)
 		if actual != test.expected {
 			t.Errorf("Expected %v, got %v", test.expected, actual)
 		}

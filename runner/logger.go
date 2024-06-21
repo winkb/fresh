@@ -12,10 +12,10 @@ type logFunc func(string, ...interface{})
 
 var logger = logPkg.New(colorable.NewColorableStderr(), "", 0)
 
-func newLogFunc(prefix string) func(string, ...interface{}) {
+func newLogFunc(s *mySetting, prefix string) func(string, ...interface{}) {
 	color, clear := "", ""
-	if Settings["colors"] == "1" {
-		color = fmt.Sprintf("\033[%sm", logColor(prefix))
+	if s.settings["colors"] == "1" {
+		color = fmt.Sprintf("\033[%sm", logColor(s, prefix))
 		clear = fmt.Sprintf("\033[%sm", colors["reset"])
 	}
 	prefix = fmt.Sprintf("%-11s", prefix)

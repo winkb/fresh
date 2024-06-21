@@ -7,11 +7,11 @@ import (
 	"os/exec"
 )
 
-func build() (string, bool) {
+func build(s *mySetting) (string, bool) {
 	buildLog("Building...")
 
 	cmds := []string{}
-	json.Unmarshal([]byte(buildCommand()), &cmds)
+	json.Unmarshal([]byte(s.buildCommand()), &cmds)
 
 	cmd := exec.Command(cmds[0], cmds[1:]...)
 

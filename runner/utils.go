@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-func initFolders() {
+func initFolders(s *mySetting) {
 	runnerLog("InitFolders")
-	path := tmpPath()
+	path := s.tmpPath()
 	runnerLog("mkdir %s", path)
 	err := os.Mkdir(path, 0755)
 	if err != nil {
@@ -16,20 +16,20 @@ func initFolders() {
 	}
 }
 
-func isTmpDir(path string) bool {
+func isTmpDir(s *mySetting, path string) bool {
 	absolutePath, _ := filepath.Abs(path)
-	absoluteTmpPath, _ := filepath.Abs(tmpPath())
+	absoluteTmpPath, _ := filepath.Abs(s.tmpPath())
 
 	return absolutePath == absoluteTmpPath
 }
 
-func isIgnoredFolder(path string) bool {
+func isIgnoredFolder(s *mySetting, path string) bool {
 	paths := strings.Split(path, "/")
 	if len(paths) <= 0 {
 		return false
 	}
 
-	for _, e := range strings.Split(Settings["ignored"], ",") {
+	for _, e := range strings.Split(s.settings["ignored"], ",") {
 		if strings.TrimSpace(e) == paths[0] {
 			return true
 		}
@@ -37,9 +37,9 @@ func isIgnoredFolder(path string) bool {
 	return false
 }
 
-func isWatchedFile(path string) bool {
+func isWatchedFile(s *mySetting, path string) bool {
 	absolutePath, _ := filepath.Abs(path)
-	absoluteTmpPath, _ := filepath.Abs(tmpPath())
+	absoluteTmpPath, _ := filepath.Abs(s.tmpPath())
 
 	if strings.HasPrefix(absolutePath, absoluteTmpPath) {
 		return false
@@ -47,7 +47,7 @@ func isWatchedFile(path string) bool {
 
 	ext := filepath.Ext(path)
 
-	for _, e := range strings.Split(Settings["valid_ext"], ",") {
+	for _, e := range strings.Split(s.settings["valid_ext"], ",") {
 		if strings.TrimSpace(e) == ext {
 			return true
 		}
@@ -56,8 +56,8 @@ func isWatchedFile(path string) bool {
 	return false
 }
 
-func shouldRebuild(eventName string) bool {
-	for _, e := range strings.Split(Settings["no_rebuild_ext"], ",") {
+func shouldRebuild(s *mySetting, eventName string) bool {
+	for _, e := range strings.Split(s.settings["no_rebuild_ext"], ",") {
 		e = strings.TrimSpace(e)
 		fileName := strings.Replace(strings.Split(eventName, ":")[0], `"`, "", -1)
 		if strings.HasSuffix(fileName, e) {
@@ -68,8 +68,8 @@ func shouldRebuild(eventName string) bool {
 	return true
 }
 
-func createBuildErrorsLog(message string) bool {
-	file, err := os.Create(buildErrorsFilePath())
+func createBuildErrorsLog(s *mySetting, message string) bool {
+	file, err := os.Create(s.buildErrorsFilePath())
 	if err != nil {
 		return false
 	}
@@ -82,8 +82,8 @@ func createBuildErrorsLog(message string) bool {
 	return true
 }
 
-func removeBuildErrorsLog() error {
-	err := os.Remove(buildErrorsFilePath())
+func removeBuildErrorsLog(s *mySetting) error {
+	err := os.Remove(s.buildErrorsFilePath())
 
 	return err
 }

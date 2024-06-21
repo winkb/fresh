@@ -34,5 +34,9 @@ func main() {
 		}
 	}
 
-	runner.Start(context.Background(), ".")
+	var sm = map[string]string{}
+
+	var s = runner.NewMySetting(sm)
+
+	runner.Start(context.Background(), s)
 }
