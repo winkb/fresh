@@ -18,7 +18,7 @@ func TestIsWatchedFile(t *testing.T) {
 		{"./tmp/test.go", false},
 	}
 
-	var s = NewMySetting(map[string]string{})
+	var s = NewMySetting(map[string]string{}, nil)
 
 	for _, test := range tests {
 		actual := isWatchedFile(s, test.file)
@@ -42,7 +42,7 @@ func TestShouldRebuild(t *testing.T) {
 		{`"./a/path/test.go": MODIFIED`, true},
 	}
 
-	var s = NewMySetting(map[string]string{})
+	var s = NewMySetting(map[string]string{}, nil)
 
 	for _, test := range tests {
 		actual := shouldRebuild(s, test.eventName)
@@ -63,7 +63,7 @@ func TestIsIgnoredFolder(t *testing.T) {
 		{"app/controllers", false},
 	}
 
-	var s = NewMySetting(map[string]string{})
+	var s = NewMySetting(map[string]string{}, nil)
 
 	for _, test := range tests {
 		actual := isIgnoredFolder(s, test.dir)

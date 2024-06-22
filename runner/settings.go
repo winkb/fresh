@@ -90,13 +90,17 @@ func getenv(key, defaultValue string) string {
 	return defaultValue
 }
 
+type TypeGetBuildCommand func(st map[string]string, arguments map[string]string) []string
+
 type mySetting struct {
-	settings map[string]string
+	settings        map[string]string
+	getBuildCommand TypeGetBuildCommand
 }
 
-func NewMySetting(settings map[string]string) *mySetting {
+func NewMySetting(settings map[string]string, getBuildCommand TypeGetBuildCommand) *mySetting {
 	return &mySetting{
-		settings: settings,
+		settings:        settings,
+		getBuildCommand: getBuildCommand,
 	}
 }
 

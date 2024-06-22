@@ -166,7 +166,6 @@ func Start(ctx context.Context, s *mySetting) {
 	t := newStarter()
 
 	initLimit()
-	initSettings(s)
 
 	initLogFuncs(s)
 	initFolders(s)

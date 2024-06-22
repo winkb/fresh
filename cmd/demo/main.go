@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/winkb/fresh/runner"
 )
@@ -13,16 +12,17 @@ func main() {
 
 	defer cancel()
 
-	cmdArr := []string{"cat", "{filename}"}
-	cmdStr, _ := json.Marshal(cmdArr)
-
 	var sm = map[string]string{
-		"build_commands": string(cmdStr),
+		"build_commands": "",
 		"valid_ext":      ".txt",
 		"root":           "./abc",
 	}
 
-	var s = runner.NewMySetting(sm)
+	var s = runner.NewMySetting(sm, func(st, arguments map[string]string) []string {
+		return []string{
+			"bash", "-c", "ls {filename} && echo '" + st["root"] + "'",
+		}
+	})
 
 	runner.Start(ctx, s)
 }

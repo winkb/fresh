@@ -36,7 +36,7 @@ func main() {
 
 	var sm = map[string]string{}
 
-	var s = runner.NewMySetting(sm)
+	var s = runner.NewMySetting(sm, nil)
 
 	runner.Start(context.Background(), s)
 }

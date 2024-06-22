@@ -19,14 +19,18 @@ func assignArguments(str string, arguments map[string]string) string {
 func build(s *mySetting, arguments map[string]string) (string, bool) {
 	buildLog("Building...")
 
-	cmds := []string{}
-	json.Unmarshal([]byte(s.buildCommand()), &cmds)
-
-	for k, v := range cmds {
-		cmds[k] = assignArguments(v, arguments)
+	cmdArr := []string{}
+	if s.getBuildCommand != nil {
+		cmdArr = s.getBuildCommand(s.settings, arguments)
+	} else {
+		json.Unmarshal([]byte(s.buildCommand()), &cmdArr)
 	}
 
-	cmd := exec.Command(cmds[0], cmds[1:]...)
+	for k, v := range cmdArr {
+		cmdArr[k] = assignArguments(v, arguments)
+	}
+
+	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
