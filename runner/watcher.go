@@ -9,7 +9,7 @@ import (
 	"github.com/howeyc/fsnotify"
 )
 
-func watchFolder(path string, ctx context.Context, s *mySetting) {
+func (l *Starter) watchFolder(path string, ctx context.Context, s *mySetting) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		fatal(err)
@@ -21,7 +21,7 @@ func watchFolder(path string, ctx context.Context, s *mySetting) {
 			case ev := <-watcher.Event:
 				if isWatchedFile(s, ev.Name) {
 					watcherLog("sending event %s", ev)
-					startChannel <- ev.String()
+					l.startChannel <- ev.String()
 				}
 			case <-ctx.Done():
 				return
@@ -39,7 +39,7 @@ func watchFolder(path string, ctx context.Context, s *mySetting) {
 	}
 }
 
-func watch(ctx context.Context, s *mySetting) {
+func (l *Starter) watch(ctx context.Context, s *mySetting) {
 	root := s.root()
 	filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() && !isTmpDir(s, path) {
@@ -52,7 +52,7 @@ func watch(ctx context.Context, s *mySetting) {
 				return filepath.SkipDir
 			}
 
-			watchFolder(path, ctx, s)
+			l.watchFolder(path, ctx, s)
 		}
 
 		return err

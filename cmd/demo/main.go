@@ -13,12 +13,13 @@ func main() {
 
 	defer cancel()
 
-	cmdArr := []string{"cat", "abc/a.txt"}
+	cmdArr := []string{"cat", "{filename}"}
 	cmdStr, _ := json.Marshal(cmdArr)
 
 	var sm = map[string]string{
 		"build_commands": string(cmdStr),
 		"valid_ext":      ".txt",
+		"root":           "./abc",
 	}
 
 	var s = runner.NewMySetting(sm)

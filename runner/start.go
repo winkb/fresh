@@ -9,20 +9,30 @@ import (
 	"time"
 )
 
-var (
+type Starter struct {
 	startChannel chan string
 	stopChannel  chan bool
-	mainLog      logFunc
-	watcherLog   logFunc
-	runnerLog    logFunc
-	buildLog     logFunc
-	appLog       logFunc
+}
+
+func newStarter() *Starter {
+	return &Starter{
+		startChannel: make(chan string, 1000),
+		stopChannel:  make(chan bool),
+	}
+}
+
+var (
+	mainLog    logFunc
+	watcherLog logFunc
+	runnerLog  logFunc
+	buildLog   logFunc
+	appLog     logFunc
 )
 
-func flushEvents() {
+func (l *Starter) flushEvents() {
 	for {
 		select {
-		case eventName := <-startChannel:
+		case eventName := <-l.startChannel:
 			mainLog("receiving event %s", eventName)
 		default:
 			return
@@ -30,7 +40,7 @@ func flushEvents() {
 	}
 }
 
-func start(ctx context.Context, s *mySetting) {
+func (l *Starter) start(ctx context.Context, s *mySetting) {
 	loopIndex := 0
 	buildDelay := s.buildDelay()
 
@@ -44,14 +54,14 @@ func start(ctx context.Context, s *mySetting) {
 			default:
 				loopIndex++
 				mainLog("Waiting (loop %d)...", loopIndex)
-				eventName := <-startChannel
+				changeInfo := <-l.startChannel
 
-				mainLog("receiving first event %s", eventName)
+				mainLog("receiving first event %s", changeInfo)
 				mainLog("sleeping for %d milliseconds", buildDelay)
 				time.Sleep(buildDelay * time.Millisecond)
 				mainLog("flushing events")
 
-				flushEvents()
+				l.flushEvents()
 
 				mainLog("Started! (%d Goroutines)", runtime.NumGoroutine())
 				err := removeBuildErrorsLog(s)
@@ -60,8 +70,23 @@ func start(ctx context.Context, s *mySetting) {
 				}
 
 				buildFailed := false
-				if shouldRebuild(s, eventName) {
-					errorMessage, ok := build(s)
+
+				var eventName string
+				var filename string
+
+				if strings.Contains(changeInfo, ":") {
+					filename = strings.TrimSpace(strings.Split(changeInfo, ":")[0])
+					filename = strings.TrimFunc(filename, func(r rune) bool {
+						return r == '"'
+					})
+					eventName = strings.Split(changeInfo, ":")[1]
+				}
+
+				if shouldRebuild(s, changeInfo) {
+					errorMessage, ok := build(s, map[string]string{
+						"event_name": eventName,
+						"filename":   filename,
+					})
 					if !ok {
 						buildFailed = true
 						mainLog("Build Failed: \n %s", errorMessage)
@@ -86,11 +111,6 @@ func start(ctx context.Context, s *mySetting) {
 			}
 		}
 	}()
-}
-
-func init() {
-	startChannel = make(chan string, 1000)
-	stopChannel = make(chan bool)
 }
 
 func initLogFuncs(s *mySetting) {
@@ -143,15 +163,16 @@ func Start(ctx context.Context, s *mySetting) {
 		}
 	}
 
+	t := newStarter()
+
 	initLimit()
 	initSettings(s)
 
 	initLogFuncs(s)
 	initFolders(s)
 	setEnvVars(s)
-	watch(ctx, s)
-	start(ctx, s)
-	startChannel <- "/"
+	t.watch(ctx, s)
+	t.start(ctx, s)
 
 	<-ctx.Done()
 }

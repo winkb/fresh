@@ -5,13 +5,26 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 )
 
-func build(s *mySetting) (string, bool) {
+func assignArguments(str string, arguments map[string]string) string {
+	for key, value := range arguments {
+		str = strings.ReplaceAll(str, "{"+key+"}", value)
+	}
+
+	return str
+}
+
+func build(s *mySetting, arguments map[string]string) (string, bool) {
 	buildLog("Building...")
 
 	cmds := []string{}
 	json.Unmarshal([]byte(s.buildCommand()), &cmds)
+
+	for k, v := range cmds {
+		cmds[k] = assignArguments(v, arguments)
+	}
 
 	cmd := exec.Command(cmds[0], cmds[1:]...)
 
