@@ -90,9 +90,6 @@ func (l *Starter) start(ctx context.Context, s *mySetting) {
 					if !ok {
 						buildFailed = true
 						mainLog("Build Failed: \n %s", errorMessage)
-						if !started {
-							os.Exit(1)
-						}
 						createBuildErrorsLog(s, errorMessage)
 					}
 				}
