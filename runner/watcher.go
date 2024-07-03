@@ -26,7 +26,7 @@ func (l *Starter) watchFolder(path string, ctx context.Context, s *mySetting) {
 					var eventStr = ev.String()
 					var now = time.Now().Unix()
 
-					if now-eventMp[eventStr] > 1 {
+					if now-eventMp[eventStr] > 2 {
 						watcherLog("sending event %s", ev)
 						l.startChannel <- eventStr
 						eventMp[eventStr] = now
