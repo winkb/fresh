@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/howeyc/fsnotify"
 )
@@ -15,13 +16,22 @@ func (l *Starter) watchFolder(path string, ctx context.Context, s *mySetting) {
 		fatal(err)
 	}
 
+	eventMp := map[string]int64{}
+
 	go func() {
 		for {
 			select {
 			case ev := <-watcher.Event:
 				if isWatchedFile(s, ev.Name) {
-					watcherLog("sending event %s", ev)
-					l.startChannel <- ev.String()
+					var eventStr = ev.String()
+					var now = time.Now().Unix()
+
+					if now-eventMp[eventStr] > 1 {
+						watcherLog("sending event %s", ev)
+						l.startChannel <- eventStr
+						eventMp[eventStr] = now
+					}
+
 				}
 			case <-ctx.Done():
 				return
